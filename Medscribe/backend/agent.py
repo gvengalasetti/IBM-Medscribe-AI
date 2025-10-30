@@ -17,10 +17,13 @@ def _get_api_client():
     creds = {"url": url, "apikey": api_key}
     return APIClient(credentials=creds, project_id=project_id)
 
-from ibm_watsonx_ai import Credentials
-from ibm_watsonx_ai.foundation_models import Model
-
 def _get_wx_model():
+    try:
+        from ibm_watsonx_ai import Credentials  # type: ignore
+        from ibm_watsonx_ai.foundation_models import ModelInference  # type: ignore
+    except Exception as exc:
+        raise RuntimeError("ibm-watsonx-ai not installed. pip install ibm-watsonx-ai") from exc
+
     api_key = os.getenv("WATSONX_APIKEY", "")
     url = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
     project_id = os.getenv("WATSONX_PROJECT_ID", "")
@@ -31,11 +34,11 @@ def _get_wx_model():
     credentials = Credentials(api_key=api_key, url=url)
     params = {
         "decoding_method": "greedy",
-        "max_new_tokens": 256,
-        "temperature": 0.7,
+        "max_new_tokens": 768,
+        "temperature": 0.2,
         "repetition_penalty": 1.05,
     }
-    return Model(model_id=model_id, params=params, credentials=credentials, project_id=project_id)
+    return ModelInference(model_id=model_id, params=params, credentials=credentials, project_id=project_id)
 
 def watsonx_chat_agent(prompt: str) -> str:
     model = _get_wx_model()
